@@ -206,6 +206,7 @@ NCBView >> classSideMethods [
 	shape := self canvas shapeFromModel: classMethodsLayer.
 	self highlight: shape.
 	RSTreeLayout new on: shape nodes.
+	shape padding: 30.
 	^ shape
 ]
 
@@ -342,7 +343,7 @@ NCBView >> fifthLayer [
 NCBView >> firstLayer [
 
 	firstLayer ifNil: [ 
-		firstLayer := self deadMethodsComposite padding: 10 ].
+		firstLayer := self deadMethodsComposite padding: 30 ].
 
 	^ firstLayer
 ]
@@ -457,13 +458,13 @@ NCBView >> nestLayers [
 		        (self secondLayer -> fifthLayer).
 		        (thirdLayer -> sixthLayer) } asOrderedDictionary.
 	self setSize: dict.
-	1halt.
+
 	left := dict keys asGroup asShapeFor: dict keys.
 	right := dict values asGroup asShapeFor: dict values.
 	{ 
 		left.
 		right } asOrderedCollection.
-		1halt.
+
 	RSHorizontalLineLayout new
 		gapSize: 0;
 		on: { 
@@ -493,10 +494,11 @@ NCBView >> scaleMethods [
 { #category : #'as yet unclassified' }
 NCBView >> secondLayer [
 
-	| instanceSide maxHeight maxWidth |
+	| instanceSide maxHeight maxWidth instanceSideWidth |
 	instanceSide := self instanceSide.
 	self setNodesOf: instanceSide withLayout: RSHorizontalTreeLayout.
 	secondLayer := (instanceSide as: RSGroup) asShapeFor: instanceSide.
+
 	"fix the width of the layers"
 	maxWidth := { 
 		            firstLayer.
@@ -504,10 +506,14 @@ NCBView >> secondLayer [
 		            self thirdLayer } max: [ :each | each width ].
 	secondLayer width: maxWidth.
 
+	"check if it is the biggest"
+	instanceSideWidth := (instanceSide collect: [ :each | each width ]) sum. 
 	secondLayer width = (instanceSide sum: [ :each | each width ]) 
 		ifFalse: [ 
 			instanceSide do: [ :each | 
-				each width: each width + (maxWidth / secondLayer nodes size) ] ].
+				each width:
+					each width
+					+ (maxWidth - instanceSideWidth / secondLayer nodes size) ] ].
 
 	"set height"
 	maxHeight := { 
@@ -520,7 +526,6 @@ NCBView >> secondLayer [
 	RSHorizontalLineLayout new
 		gapSize: 0;
 		on: secondLayer nodes.
-
 	secondLayer adjustToChildren.
 	^ secondLayer
 ]
@@ -529,7 +534,7 @@ NCBView >> secondLayer [
 NCBView >> setNodesOf: object withLayout: aLayout [
 
 	aLayout new on: (object flatCollect: #nodes).
-	object do: [ :layer | layer padding: 10 ]
+	object do: [ :layer | layer padding: 30 ]
 ]
 
 { #category : #initialization }
@@ -538,11 +543,11 @@ NCBView >> setSize: dict [
 	| maxWidth |
 	maxWidth := dict values max: [ :each | each width ].
 	dict valuesDo: [ :layer | layer width: maxWidth ].
-	1 halt.
+
 	dict keys detectMax: [ :each | each width ].
 	maxWidth := dict keys max: [ :each | each width ].
 	dict keysDo: [ :layer | layer width: maxWidth ].
-	1halt.
+
 	dict associationsDo: [ :assoc | 
 		| maxHeight |
 		maxHeight := { 
@@ -559,7 +564,7 @@ NCBView >> setSize: dict [
 		RSVerticalLineLayout new
 			gapSize: 0;
 			on: each ].
-	dict
+	
 ]
 
 { #category : #'as yet unclassified' }
